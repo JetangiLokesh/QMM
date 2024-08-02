@@ -1,0 +1,378 @@
+---
+title: "Model-8 DEA"
+author: "LOKESH JETANGI"
+date: "2023-10-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#install.packages("Benchmarking")
+library(kableExtra)
+library(Benchmarking)
+library(igraph)
+library(lpSolve)
+```
+**QUESTION:The Hope Valley Health Care Association owns and operates six nursing homes in adjoining states. An evaluation of their efficiency has been undertaken using two inputs and two outputs.The inputs are staffing labor (measured in average hours per day) and the cost of supplies (in thousands of dollars per day). The outputs are the number of patient-days reimbursed by third-party sources and the number of patient-days reimbursed privately. A summary of performance data is shown in the table below:**
+```{r}
+if (!require(knitr)) {
+ library(knitr)
+}
+```
+
+```{r}
+data<- data.frame(
+DMU = c("Faculty 1", "Faculty 2", "Faculty 3", "Faculty 4", "Faculty 5", "Faculty 6"),
+Staff_hrs_per_day = c(100,300,320,500,350,340),
+Supplies_per_day = c(0.3,0.6,1.2,2.0,1.4,0.7),
+Reimbursed_patient_days = c(15000,15000,40000,28000,20000,14000),
+Privately_paid_patient_days = c(3500,20000,11000,42000,25000,15000)
+)
+
+
+```
+
+```{r}
+#install.packages("kableExtra")
+#library(kableExtra)
+kable(data, format = "pandoc", caption = "Hope Valley Health Care Association", booktabs = TRUE)
+
+```
+
+
+**(QUESTION -1 & 2).Formulate and perform DEA analysis under all DEA assumptions of FDH,CRS,VRS, IRS,DRS,and FRH.AND Determine the Peers and Lambdas under each of the above assumptions**
+
+```{r}
+x <- matrix(c(100,300,320,500,350,340,
+              0.3,0.6,1.2,2.0,1.4,0.7),ncol=2)
+y <- matrix(c(15000,15000,40000,28000,20000,14000,
+               3500,20000,11000,42000,25000,15000),ncol=2)
+colnames(y) <- c("Reimbursed_Patient_Days","Privately_Paid_Patient_Days")
+colnames(x) <- c("Staff_Hours_Per_Day","Supplies_Per_Day")
+```
+
+**(1)Calculating Constant Returns to Scale (CRS)**
+
+```{r}
+dea_CRS <-dea(x,y,RTS = "crs")
+dea_CRS
+```
+```{r}
+peers(dea_CRS)
+```
+
+```{r}
+lambda(dea_CRS)
+```
+**Interpretation of lambda for CRS **
+
+Lambda values, indicating the learning influence of peers, reveal that DMU3 learns significantly from DMU1 (L1) and less from DMU4 (L4). The calculated inefficiency of DMU3, at 12% (1 - 0.879), highlights room for improvement. To enhance efficiency, DMU3 should prioritize learning from L1 while reducing reliance on L4. Interestingly, DMU3's efficiency aligns closely with DMU1, suggesting that adopting practices similar to DMU1 could lead to improvements. Positioned off the efficiency frontier, DMU3 is deemed inefficient, emphasizing the need for adjustments in learning strategies. The substantial L1 value of 2.578 underlines the potential for improvement by incorporating practices aligned with DMU1. In summary, optimizing learning strategies, particularly from efficient peers, is crucial for DMU3 to enhance overall efficiency and move towards the efficiency frontier.
+
+In a parallel scenario, DMU5's learning dynamics involve two peers, DMU1 (L1) and DMU4 (L4), resulting in a 10% inefficiency (1 - 0.894). To optimize, DMU5 should prioritize learning with a weightage of 0.2631 from L1 and 0.5733 from L4. The higher lambda for L4 implies DMU5's proximity to it, indicating a significant learning potential. Likewise, DMU6, learning from DMU1 (L1) and DMU2 (L2), exhibits 30% inefficiency (1 - 0.70). To address this, DMU6 should focus on a weightage of 0.222 from L1 and 0.7111 from L2. The higher lambda for L2 places DMU6 closer to DMU2, suggesting a substantial learning opportunity. However, being farther from DMU1 implies comparatively less learning potential. These lambda values underscore the strategic significance of learning dynamics in improving efficiency by aligning with peers more closely positioned on the efficiency frontier.
+
+
+**(2)Calculating Decreasing Returns to Scale (DRS)**
+
+```{r}
+dea_DRS<-dea(x,y,RTS = "drs")
+dea_DRS
+```
+
+```{r}
+peers(dea_DRS)
+```
+
+```{r}
+lambda(dea_DRS)
+```
+**Interpretation of lambda for DRS **
+
+Similarly, DMU5 exhibits 10% inefficiency by learning from peers DMU1 (L1) and DMU4 (L4). To reduce this, DMU5 should prioritize learning with a 0.2631 weightage from L1 and 0.5733 from L4, as the higher lambda for L4 indicates closer proximity and more significant learning potential. In the same vein, DMU6 displays 30% inefficiency through its learning engagement with DMU1 (L1) and DMU2 (L2). Addressing this, DMU6 should focus on a 0.222 weightage from L1 and 0.7111 from L2. With a higher lambda for L2, DMU6 is closer to DMU2, suggesting substantial learning, while its distance from DMU1 implies comparatively less learning potential. These lambda values highlight the strategic alignment with more efficient peers as a key factor in efficiency enhancement.
+
+**(3)Calculating Variable Returns to Scale (VRS)**
+
+```{r}
+dea_VRS<-dea(x,y,RTS = "vrs")
+dea_VRS
+```
+
+```{r}
+peers(dea_VRS)
+```
+
+```{r}
+lambda(dea_VRS)
+```
+
+**Interpretation of lambda for VRS **
+
+DMU5 engages in learning from DMU1 (L1) and DMU4 (L4), resulting in a 7% inefficiency (1 - 0.9232). To address this, DMU5 should prioritize learning with a 0.441 weightage from L1 and 0.558 from L4, aiming to reduce inefficiency by 8%. Given that the lambda value for L4 is higher than L1, DMU5 is positioned closer to L4, suggesting a greater learning potential from this peer. Similarly, DMU6, learning from DMU1 (L1) and DMU2 (L2), exhibits a 28% inefficiency (1 - 0.72). To mitigate this, DMU6 should focus on a 0.3030 weightage from L1 and 0.6969 from L2. With a higher lambda for L2, DMU6 is situated near DMU2, indicating substantial learning, while its distance from DMU1 implies comparatively less learning potential. The lambda values underscore the strategic alignment with more efficient peers for efficiency enhancement.
+
+**(4)Calculating Increasing Returns to Scale (IRS)**
+
+```{r}
+dea_IRS<-dea(x,y,RTS = "irs")
+dea_IRS
+```
+
+```{r}
+peers(dea_IRS)
+```
+
+```{r}
+lambda(dea_IRS)
+```
+
+**Interpretation of lambda for IRS **
+
+The lambda values serve as indicators of how much a particular Decision Making Unit (DMU) learns from its peers. Examining DMU3, which learns from DMU1 (L1) and DMU4 (L4), the lambda values for L1 and L4 demonstrate the extent of learning. With an inefficiency of 12% (1 - 0.879), DMU3 could reduce this by emphasizing learning more from L1 and less from L4. Efficiency-wise, DMU3 is close to DMU1 and distant from DMU4. Moving on to DMU5, which learns from DMU1 (L1) and DMU4 (L4), the 7% inefficiency (1 - 0.9232) could be reduced by focusing on a 0.441 weightage from L1 and 0.558 from L4. The higher lambda for L4 suggests DMU5's proximity to it, indicating more significant learning potential. Similarly, DMU6, learning from DMU1 (L1) and DMU2 (L2), faces 28% inefficiency (1 - 0.72), reducible by prioritizing a 0.3030 weightage from L1 and 0.6969 from L2. A higher lambda for L2 places DMU6 nearer to DMU2, signifying substantial learning, while being farther from DMU1 implies relatively less learning potential. This emphasizes the strategic significance of aligning with more efficient peers for overall efficiency enhancement.
+
+
+**(5)Calculating Free Disposal Hull (FDH)**
+
+```{r}
+dea_FDH<- dea(x,y,RTS = "fdh")
+dea_FDH
+```
+
+```{r}
+peers(dea_FDH)
+```
+
+```{r}
+lambda(dea_FDH)
+```
+
+**Interpretation of lambda for FDH **
+
+With the exception of DMU6, all Decision Making Units (DMUs) are operating at maximum efficiency. DMU6, unique in its learning approach from only one peer, DMU2 (L2), experiences a 12% inefficiency (1 - 0.88). To eradicate this inefficiency completely, DMU6 can achieve 100% efficiency by embracing knowledge solely from DMU2, denoted by a 100% weightage from L2. In practical terms, this implies that DMU6 absorbs the entirety of its 12% inefficiency through learning from DMU2, highlighting the direct link between peer learning and the enhancement of DMU6's efficiency.
+
+**(6)Calculating free replicable hall (FRH)**
+
+
+```{r}
+dea_FRH<-dea(x,y,RTS = "add")
+dea_FRH
+```
+
+```{r}
+peers(dea_FRH)
+```
+
+```{r}
+lambda(dea_FRH)
+```
+
+**Interpretation of lambda for FRH **
+
+Parallel to the Free Disposable Hull (FDH) analysis, all Decision Making Units (DMUs) exhibit peak efficiency, except for DMU6. Singular in its learning strategy solely from DMU2 (L2), DMU6 contends with a 12% inefficiency (1 - 0.88). This inefficiency is wholly remediable, as DMU6 holds the capability to attain 100% efficiency by assimilating insights exclusively from DMU2, indicated by a 100% weightage from L2. In practical terms, this denotes that DMU6 absorbs the complete 12% inefficiency through its learning process from DMU2, underscored by the direct correlation between the learning dynamics from DMU2 and the refinement of DMU6's overall efficiency.
+
+**(3)Summarize your results in a tabular format**
+
+```{r}
+#install.packages("kableExtra")
+#library(kableExtra)
+
+
+summary_CRS <- matrix(c("CRS",".",".",
+                        "3",".",".",
+                        "Facility 3", "Facility 5","Facility 6",
+                        "87.9","89.4","70.4",
+                        "12.1","10.6","29.6",
+                        "Facility 1 & 4","Facility 1 & 4","Facility 1 & 2",
+                        "2.57 & 0.04","0.26 & 0.57","0.22 & 0.711"), ncol = 7, byrow = FALSE)
+colnames(summary_CRS) <- c("RTS","Count_Inefficient_DMUs","Name_of_inefficient_DMUs","%_efficiency","%_Inefficiency (1-%_efficiency)","Peers","Lambda")
+
+summary_DRS <- matrix(c("DRS",".",
+                        "2",".",
+                        "Facility 5","Facility 6",
+                        "89.4","70.4",
+                        "10.6","29.6",
+                        "Facility 1 & 4","Facility 1 & 2",
+                        "0.26 & 0.57","0.22 & 0.711"), ncol = 7, byrow = FALSE)
+colnames(summary_DRS) <- c("RTS","Count_Inefficient_DMUs","Name_of_inefficient_DMUs","%_efficiency","%_Inefficiency (1-%_efficiency)","Peers","Lambda")
+
+summary_IRS <- matrix(c("IRS",".",".",
+                        "3",".",".",
+                        "Facility 3", "Facility 5","Facility 6",
+                        "87.9","92.3","72.7",
+                        "12.1","7.7","27.3",
+                        "Facility 1 & 4","Facility 1 & 4","Facility 1 & 2",
+                        "2.57 & 0.04","0.45 & 0.55","0.30 & 0.70"), ncol = 7, byrow = FALSE)
+colnames(summary_IRS) <- c("RTS","Count_Inefficient_DMUs","Name_of_inefficient_DMUs","%_efficiency","%_Inefficiency (1-%_efficiency)","Peers","Lambda")
+
+summary_VRS <- matrix(c("VRS",".",
+                        "2",".",
+                        "Facility 5","Facility 6",
+                        "92.3","72.7",
+                        "7.7","27.3",
+                        "Facility 1 & 4","Facility 1 & 2",
+                        "0.45 & 0.55","0.30 & 0.70"), ncol = 7, byrow = FALSE)
+colnames(summary_VRS) <- c("RTS","Count_Inefficient_DMUs","Name_of_inefficient_DMUs","%_efficiency","%_Inefficiency (1-%_efficiency)","Peers","Lambda")
+
+summary_FDH <- matrix(c("FDH","FRH",
+                        1,1,
+                        "Facility 6","Facility 6",
+                        "88.2","88.2",
+                        "11.8","11.8",
+                        "Facility 2","Facility 2",
+                        "1","1"), ncol = 7, byrow = FALSE)
+colnames(summary_FDH) <- c("RTS","Count_Inefficient_DMUs","Name_of_inefficient_DMUs","%_efficiency","%_Inefficiency (1-%_efficiency)","Peers","Lambda")
+
+rows_connected <- rbind(summary_CRS, summary_DRS, summary_IRS, summary_VRS, summary_FDH)
+
+rows_connected %>%
+  kable() %>%
+  kable_classic() %>%
+  column_spec(2, border_left = TRUE) %>%
+  row_spec(3, extra_css = "border-bottom: 1px dotted;") %>%
+  row_spec(5, extra_css = "border-bottom: 1px dotted;") %>%
+  row_spec(8, extra_css = "border-bottom: 1px dotted;") %>%
+  row_spec(10, extra_css = "border-bottom: 1px dotted;") %>%
+  row_spec(11, extra_css = "border-bottom: 1px dotted;") %>%
+  add_header_above(c("Summary of Less Efficient DMUs" = 7))
+
+```
+```{r}
+Summary_efficient<- matrix(c("CRS","DRS","IRS","VRS","FDH","FRH",
+"Facility 1, 2 & 4","Facility 1, 2, 3 & 4","Facility 1, 2 & 4", "Facility 1, 2, 3 & 4", "Facility 1, 2, 3 ,4 & 5", "Facility 1, 2, 3 ,4 & 5"), ncol = 2, byrow=F)
+colnames(Summary_efficient) <- c("RTS", "Efficient_DMUs")
+
+Summary_efficient%>%
+ kable()%>%
+ kable_classic()%>%
+ column_spec(2,border_left = TRUE) %>% 
+ row_spec(6,extra_css = "border-bottom: 1px dotted;")%>%
+ add_header_above(c("Summary of efficient DMUs" = 2))
+```
+
+**Plotting the Graphs**
+
+```{r}
+x <- matrix(c(100, 300, 320, 500, 350, 340, 
+              0.3, 0.6, 1.2, 2.0, 1.4, 0.7),
+                                   ncol = 2,
+dimnames = list(c("A", "B", "C", "D", "E", "F"), c("Staff_Hours_Per_Day", "Supplies_Per_Day")))
+
+y <- matrix(c(15000, 15000, 40000, 28000, 20000, 14000, 
+              3500, 20000, 11000, 42000, 25000, 15000),
+                                              ncol = 2,
+dimnames = list(c("A", "B", "C", "D", "E", "F"), c("Reimbursed_Patient_Days", "Privately_Paid_Patient_Days")))
+```
+
+**CRS**
+
+```{R}
+dea.plot(x, y, RTS='crs', ORIENTATION = "in-out", txt = rownames(x),main = "Constant Returns to Scale")
+```
+
+
+**VRS**
+
+```{r}
+dea.plot(x, y, RTS='vrs', ORIENTATION = "in-out", txt = rownames(x),main = "Variable Returns to Scale")
+
+```
+
+**IRS**
+
+```{r}
+dea.plot(x, y, RTS='irs', ORIENTATION = "in-out", txt = rownames(x),main = "Increasing Returns to Scale")
+
+```
+
+**DRS**
+
+```{r}
+dea.plot(x, y, RTS='drs', ORIENTATION = "in-out", txt = rownames(x),main = "Decreasing Returns to Scale")
+
+```
+
+**FDH**
+
+```{r}
+dea.plot(x, y, RTS='fdh', ORIENTATION = "in-out", txt = rownames(x),main = "Free Disposability Hull")
+```
+
+**FRH**
+
+```{r}
+dea.plot(x, y, RTS='add', ORIENTATION = "in-out", txt = rownames(x),main = "Free Replicability Hull")
+```
+**CRS,IRS, DRS,VRS**
+
+```{r}
+dea.plot(x, y, RTS='crs', ORIENTATION = "in-out", txt = rownames(x),main = "CRS,IRS, DRS,VRS")
+dea.plot(x, y, RTS='irs', ORIENTATION = "in-out", add=TRUE,lty="dashed",lwd=2, txt = rownames(x))
+dea.plot(x, y, RTS='drs', ORIENTATION = "in-out", add=TRUE,lty="dashed",lwd=2, txt = rownames(x))
+dea.plot(x, y, RTS='vrs', ORIENTATION = "in-out", add=TRUE,lty="dashed",lwd=2, txt = rownames(x))
+```
+
+**FDH & FRH**
+
+
+```{r}
+dea.plot(x, y, RTS='fdh', ORIENTATION = "in-out", txt = rownames(x),main = "FDH & FRH")
+dea.plot(x, y, RTS='add', ORIENTATION = "in-out", add=TRUE,lty="dashed",lwd=2, txt = rownames(x))
+```
+
+
+
+
+**QUESTION:4. Compare and contrast the above results**
+
+
+*Before interpreting, it's critical to know the differences in the scales (RTS)Constant Returns to Scale (CRS):-An instance when growing the production scale leads to proportionate gains in output without affecting the effectiveness of resource utilization is known as a "constant return to scale" (CRS) condition. This term is used in economics and production theory. That means that practically speaking, if a business doubled its inputs, it would likewise double its output.*
+
+*The dispersion scales that help us understand what to increase and what to decrease based on the input deployment are Decreasing, Increasing, and Varying Returns to Scale (DRS, IRS, and VRS).These scales provide useful information for optimizing production and resource allocation techniques by helping to decide whether to increase or decrease resources based on the deployment of inputs.*
+
+*Free Disposability & Free Replicability Hull (FDH & FRH):The qualities of being free to dispose of and reproduce As non-parametric approaches that do not require convexity assumptions, Hull (FDH & FRH) are used to evaluate the effectiveness of Decision Making Units (DMUs). These techniques enable the assessment of operational performance in a thorough manner without predetermined functional limitations by taking into account the flexibility to allocate or duplicate resources.*
+
+**1)Constant Returns to Scale**
+*The outcomes show that DMUs 1, 2, and 4 are effective. With 12.1%, 10.6%, and 29.6%, respectively, DMUs 3, 5, and 6 are inefficient. This implies that inefficient DMUs can adjust their size or level of inefficiency in order to preserve consistency by learning from their peers. Here, DMUs 3,5 & 6 can pick up knowledge from DMUs 1, 2, & 4.*
+
+**2)Variable Returns to Scale**
+*The outcomes show that DMUs 1, 2, 3, and 4 are all effective. DMUs 5 and 6 have inefficiencies of 7.7% and 27.3%, respectively. It implies that inefficient DMUs can pick up tips from their peers and adjust as needed. Variable or Variable Returns to Scale helps us grasp the scale of operations with variations towards the input and output component either by increasing or decreasing or by using both. Here, DMUs 5 & 6 can learn from their peers, which are DMUs 1, 2, 3, & 4.*
+
+**3)Decreasing Returns to Scale**
+*The findings show that DMUs 1, 2, 3, and 4 are all effective. With 10.6% and 29.6%, respectively, DMU 5 and 6 are inefficient. It implies that inefficient DMUs might be reduced in size and learn from their peers. This scale indicates which DMUs would be candidates for operational scaling, i.e., by examining the inefficient DMUs; in this instance, it would be DMUs 5 and 6. Since the CRS values are the foundational original scale, this can also be obtained by looking at them.*
+
+**4)Increasing Returns to Scale**
+*The outcomes show that DMUs 1, 2, and 4 are effective. At 12.1%, 7.7%, and 27.3%, respectively, DMUs 3, 5, and 6 are inefficient. It implies that inefficient DMUs can grow by learning from their peers. Here, DMUs 3,5 & 6 can pick up knowledge from DMUs 1, 2, & 4.As its name implies, it uses efficiency scores to inform any firm about their ability to unilaterally expand their scope of operations.*
+
+**5)Free Disposability Hull**
+*The findings show that all of the DMUs are effective, with the exception of DMU 6, which is 11.6% ineffective and can benefit from DMU 2's experience. This is primarily because the scale is able to capture even the lowest degree of efficiency thanks to this technique, which also makes no convexity assumption.*
+
+**6)Free Replicability Hull**
+*The findings show that all DMUs are efficient, with the exception of DMU 6, which is 11.6% inefficient and is able to learn from its peer, DMU 2. This is primarily because there is no convexity assumption, and this technique generally enables the scale to capture even the lowest efficiency levels that are disposable and free from replication.*
+
+*The clarification underscores that in the context of Data Envelopment Analysis (DEA), the identification of peer values (neighbors) and lambda weights (weights assigned to peers) is exclusive to Decision Making Units (DMUs) exhibiting inefficiency. Conversely, DMUs operating efficiently do not have associated peers or lambda weights. In essence, DEA stands as a pivotal instrument for enterprises, aiding in the identification of the most efficient DMU for potential improvements in output by adjusting inputs. Additionally, organizations can make judicious choices regarding the preferred Returns to Scale (RTS) based on their unique requirements, recognizing the distinct importance of each scale option in meeting diverse operational needs. DEA, therefore, emerges as an indispensable analytical methodology, empowering businesses to fine-tune their efficiency and overall performance.*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
