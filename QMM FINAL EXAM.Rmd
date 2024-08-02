@@ -1,0 +1,316 @@
+---
+title: "QUANTITATIVE MANAGEMENT MODELING"
+author: "GROUP - 9 (Final Examination)"
+date: "2023-12-08"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax
+for authoring HTML, PDF, and MS Word documents. For more details on
+using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that
+includes both content as well as the output of any embedded R code
+chunks within the document. You can embed an R code chunk like this:
+
+**You have been assigned the task of forming groups. Consider that your class consists of 15 students, and you aim to create 5 groups, each containing 3 students. The main goal is to maximize the chance of success for each group on a class project. The requirements for forming groups are as follows:**
+
+**• Divide 15 students into 5 groups of 3 members each.**
+
+**• What factors affect the success of groups? Define three factors (e.g., GPA, gender, etc.) that you feel influence the contributions students make towards project success.**
+
+**• Use R's randomization function to generate data for these factors.**
+
+**• Record the collected data.**
+
+**• Formulate a mathematical model with an objective function, constraints, and non-negativity components.**
+
+**• Solve the model in R and report objective function values and decision variables.**
+
+**• Provide insights in your results**
+
+
+**I Have considered 3 factors ** 
+
+**1) GPA **
+
+**2) Presentation skill**
+
+**3) Team Participation**
+
+```{r}
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+```
+
+```{r}
+library(kableExtra)
+library(dplyr)
+
+set.seed(69)
+
+# Use Val_Data instead of df
+Val_Data <- data.frame("Student ID"=1:15, 
+                       "Student name"=c("Ajeet", "Jackson", "Olivia", "Liam", "Emma", "praveen", "Lucas", "Mia", "Ethan", "Isabella", "Aiden", "lokesh", "Logan","Amelia", "Indira"),
+                       "GPA" = c(3.57, 2.02, 3.56, 3.46, 3.26, 2.96, 2.31, 2.02, 2.90, 2.98, 2.78, 2.93, 3.43, 2.11, 2.71),
+                       "Presentation skill" = c(3.14, 3.19, 3.90, 3.31, 3.36, 3.78, 3.19, 3.02, 3.41, 3.48, 3.42, 3.34, 3.87, 3.46, 3.53),
+                       "Team Participation" = c(5, 4, 7, 2, 6, 2, 10, 6, 5, 4, 9, 4, 3, 2, 2), check.names = FALSE)
+
+# Define weights
+gpa_weight <- 0.5
+presentation_skill_weight <- 0.3
+team_participation_weight <- 0.2
+
+# Update Val_Data
+Val_Data <- Val_Data %>% 
+  mutate(Points = round(2 * GPA + 3 * `Presentation skill` + 1 * `Team Participation`),
+         Weighted_Avg = round((GPA * gpa_weight +
+                               `Presentation skill` * presentation_skill_weight +
+                               `Team Participation` * team_participation_weight), 2))
+
+# Calculate the mean for GPA, Presentation skill, and Team Participation
+average_row <- Val_Data %>%
+  summarise(across(c("GPA", "Presentation skill", "Team Participation"), mean)) %>%
+  mutate
+
+# Bind the average row to the original data
+Val_Data <- bind_rows(Val_Data, average_row)
+
+# Print the table with a line below the average row
+Val_Data %>% 
+  kable(align = "c") %>%
+  kable_classic() %>%
+  column_spec(1:4, border_right = TRUE) %>%
+  row_spec(15,extra_css = "border-bottom:dotted;")%>%
+  row_spec(nrow(Val_Data), extra_css = "border-bottom: 2px solid black;")
+```
+
+
+
+```{r}
+library(ggplot2)
+
+# Plotting the Points for each student
+ggplot(Val_Data, aes(x = reorder(`Student name`, Points), y = Points, fill = `Student name`)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Points for Each Student",
+       x = "Student Name",
+       y = "Points") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+**1(b).Formulate a mathematical model with an objective function, constraints, and non-negativity components.**
+
+
+## What are your constraints?
+
+
+Student_Group1: G1S1 +G1S2 +G1S3 +G1S4 +G1S5 +G1S6 +G1S7 +G1S8 +G1S9 +G1S10 +G1S11 +G1S12 +G1S13 +G1S14 +G1S15 = 3;
+Student_Group2: G2S1 +G2S2 +G2S3 +G2S4 +G2S5 +G2S6 +G2S7 +G2S8 +G2S9 +G2S10 +G2S11 +G2S12 +G2S13 +G2S14 +G2S15 = 3;
+Student_Group3: G3S1 +G3S2 +G3S3 +G3S4 +G3S5 +G3S6 +G3S7 +G3S8 +G3S9 +G3S10 +G3S11 +G3S12 +G3S13 +G3S14 +G3S15 = 3;
+Student_Group4: G4S1 +G4S2 +G4S3 +G4S4 +G4S5 +G4S6 +G4S7 +G4S8 +G4S9 +G4S10 +G4S11 +G4S12 +G4S13 +G4S14 +G4S15 = 3;
+Student_Group5: G5S1 +G5S2 +G5S3 +G5S4 +G5S5 +G5S6 +G5S7 +G5S8 +G5S9 +G5S10 +G5S11 +G5S12 +G5S13 +G5S14 +G5S15 = 3;
+
+
+Student_1: G1S1 + G2S1 + G3S1 + G4S1 + G5S1 = 1;
+
+Student_2: G1S2 + G2S2 + G3S2 + G4S2 + G5S2 = 1;
+
+Student_3: G1S3 + G2S3 + G3S3 + G4S3 + G5S3 = 1;
+
+Student_4: G1S4 + G2S4 + G3S4 + G4S4 + G5S4 = 1;
+
+Student_5: G1S5 + G2S5 + G3S5 + G4S5 + G5S5 = 1;
+
+Student_6: G1S6 + G2S6 + G3S6 + G4S6 + G5S6 = 1;
+
+Student_7: G1S7 + G2S7 + G3S7 + G4S7 + G5S7 = 1;
+
+Student_8: G1S8 + G2S8 + G3S8 + G4S8 + G5S8 = 1;
+
+Student_9: G1S9 + G2S9 + G3S9 + G4S9 + G5S9 = 1;
+
+Student_10: G1S10 + G2S10 + G3S10 + G4S10 + G5S10 = 1;
+
+Student_11: G1S11 + G2S11 + G3S11 + G4S11 + G5S11 = 1;
+
+Student_12: G1S12 + G2S12 + G3S12 + G4S12 + G5S12 = 1;
+
+student_13: G1S13 + G2S13 + G3S13 + G4S13 + G5S13 = 1;
+
+student_14: G1S14 + G2S14 + G3S14 + G4S14 + G5S14 = 1;
+
+student_15: G1S15 + G2S15 + G3S15 + G4S15 + G5S15 = 1;
+
+/* GPA constraint */
+
+Group1_GPA: 3.57G1S1+2.02G1S2+3.56G1S3+3.46G1S4+3.26G1S5+2.96G1S6+2.31G1S7+2.02G1S8+2.90G1S9+2.98G1S10+2.78G1S11+2.93G1S12+3.43G1S13+2.11G1S14+2.71G1S15 >= 2.86;
+Group2_GPA: 3.57G2S1+2.02G2S2+3.56G2S3+3.46G2S4+3.26G2S5+2.96G2S6+2.31G2S7+2.02G2S8+2.90G2S9+2.98G2S10+2.78G2S11+2.93G2S12+3.43G2S13+2.11G2S14+2.71G2S15 >= 2.86;
+Group3_GPA: 3.57G3S1+2.02G3S2+3.56G3S3+3.46G3S4+3.26G3S5+2.96G3S6+2.31G3S7+2.02G3S8+2.90G3S9+2.98G3S10+2.78G3S11+2.93G3S12+3.43G3S13+2.11G3S14+2.71G3S15 >= 2.86;
+Group4_GPA: 3.57G4S1+2.02G4S2+3.56G4S3+3.46G4S4+3.26G4S5+2.96G4S6+2.31G4S7+2.02G4S8+2.90G4S9+2.98G4S10+2.78G4S11+2.93G4S12+3.43G4S13+2.11G4S14+2.71G4S15 >= 2.86;
+Group5_GPA: 3.57G5S1+2.02G5S2+3.56G5S3+3.46G5S4+3.26G5S5+2.96G5S6+2.31G5S7+2.02G5S8+2.90G5S9+2.98G5S10+2.78G5S11+2.93G5S12+3.43G5S13+2.11G5S14+2.71G5S15 >= 2.86;
+
+
+/* Presentation skill */
+
+Group1_Presentation_skill: 3.14G1S1+3.19G1S2+3.90G1S3+3.31G1S4+3.36G1S5+3.78G1S6+3.19G1S7+3.02G1S8+3.41G1S9+3.48G1S10+3.42G1S11+3.34G1S12+3.87G1S13+3.46G1S14+3.53G1S15 >= 3.42;
+Group2_Presentation_skill: 3.14G2S1+3.19G2S2+3.90G2S3+3.31G2S4+3.36G2S5+3.78G2S6+3.19G2S7+3.02G2S8+3.41G2S9+3.48G2S10+3.42G2S11+3.34G2S12+3.87G2S13+3.46G2S14+3.53G2S15 >= 3.42;
+Group3_Presentation_skill: 3.14G3S1+3.19G3S2+3.90G3S3+3.31G3S4+3.36G3S5+3.78G3S6+3.19G3S7+3.02G3S8+3.41G3S9+3.48G3S10+3.42G3S11+3.34G3S12+3.87G3S13+3.46G3S14+3.53G3S15 >= 3.42;
+Group4_Presentation_skill: 3.14G4S1+3.19G4S2+3.90G4S3+3.31G4S4+3.36G4S5+3.78G4S6+3.19G4S7+3.02G4S8+3.41G4S9+3.48G4S10+3.42G4S11+3.34G4S12+3.87G4S13+3.46G4S14+3.53G4S15 >= 3.42;
+Group5_Presentation_skill: 3.14G5S1+3.19G5S2+3.90G5S3+3.31G5S4+3.36G5S5+3.78G5S6+3.19G5S7+3.02G5S8+3.41G5S9+3.48G5S10+3.42G5S11+3.34G5S12+3.87G5S13+3.46G5S14+3.53G5S15 >= 3.42;
+
+/* Team Participation */ 
+Group1_Team_Participation: 5G1S1+4G1S2+7G1S3+2G1S4+6G1S5+2G1S6+10G1S7+6G1S8+5G1S9+4G1S10+9G1S11+4G1S12+3G1S13+2G1S14+2G1S15 >= 4.73;
+Group2_Team_Participation: 5G2S1+4G2S2+7G2S3+2G2S4+6G2S5+2G2S6+10G2S7+6G2S8+5G2S9+4G2S10+9G2S11+4G2S12+3G2S13+2G2S14+2G2S15 >= 4.73;
+Group3_Team_Participation: 5G3S1+4G3S2+7G3S3+2G3S4+6G3S5+2G3S6+10G3S7+6G3S8+5G3S9+4G3S10+9G3S11+4G3S12+3G3S13+2G3S14+2G3S15 >= 4.73;
+Group4_Team_Participation: 5G4S1+4G4S2+7G4S3+2G4S4+6G4S5+2G4S6+10G4S7+6G4S8+5G4S9+4G4S10+9G4S11+4G4S12+3G4S13+2G4S14+2G4S15 >= 4.73;
+Group5_Team_Participation: 5G5S1+4G5S2+7G5S3+2G5S4+6G5S5+2G5S6+10G5S7+6G5S8+5G5S9+4G5S10+9G5S11+4G5S12+3G5S13+2G5S14+2G5S15 >= 4.73;
+
+*Constraints for each group can be established based on the information provided in the table above in the following manner:*
+
+Consider a student denoted by $x_{ij}$, where i = represents the Student ID  and j =  signifies the Group number. The variable $x_{ij}$ takes a value of 1 or 0, indicating the presence or absence of a specific student in a particular group.
+
+ **Total number of students in a group should be 3 members: **
+
+$$\sum_{i=1}^{15}x_{ij}=3 \hspace{0.5cm}\forall\hspace{0.2cm}  j \in  (1,2,3,4,5)$$
+
+**An individual must belong to a single group and cannot be a member of more than one group:**
+
+$$\sum_{j=1}^5x_{ij}=1\:\:\forall\:\:i\in(1,2,3,4,...,14,15)$$
+
+**GPA constraint:**
+
+$$\sum_{i=1}^{15}G_i*x_{ij}\ge2.86\:\:\forall\hspace{0.2cm}  j \in  (1,2,3,4,5),where\:G_i=GPA\:of\:students$$
+
+**Presentation skill:**
+
+$$\sum_{i=1}^{15}A_i*x_{ij}\ge3.42\:\:\forall\hspace{0.2cm}  j \in  (1,2,3,4,5),\:where \:A_i=Presentation \: skill\:of\:students$$
+
+**Team Participation:** 
+
+$$ \sum_{i=1}^{15}Aw_{i}*x_{ij}\ge4.73,where\:Aw_i=Team\:Participation\:of\:students $$
+
+**Non-negative of variables: **
+
+$$ x_{ij}\ge0\:\:where\:\:i=1,2,...,14,15\:\:j=1,2,3,4,5 $$
+
+
+  **Solve the model in R**
+
+
+```{r}
+Val_Data1=data.frame(Factors=c('GPA','Presentation skill','Team Participation'),
+               'Target'= c('>=2.86','>=3.42','>=4.73'),
+               check.names = FALSE)
+Val_Data1
+```
+
+```{r}
+library(lpSolveAPI)
+
+# Load the lp file
+Stu_Grp <- read.lp("C:/Users/jetan/OneDrive/Desktop/qmm2finalexam.lp")
+print(Stu_Grp)
+
+```
+
+```{r}
+lp.control(Stu_Grp, sense = "max")
+```
+
+
+```{R}
+solve(Stu_Grp)
+```
+
+```{R}
+get.objective(Stu_Grp)
+```
+```{r}
+#Group-1
+get.variables(Stu_Grp)[1:15]
+#Group-2
+get.variables(Stu_Grp)[16:30]
+#Group-3
+get.variables(Stu_Grp)[31:45]
+#Group-4
+get.variables(Stu_Grp)[46:60]
+#Group-5
+get.variables(Stu_Grp)[61:75]
+```
+
+**Group 1 STUDENT:-  7, 8, 11 **
+
+**GROUP 2 STUDENT:-  2, 6, 13 **
+
+**GROUP 3 STUDENT:-  9, 14, 15 **
+
+**GROUP 4 STUDENT:-  4, 10, 12 **
+
+**GROUP 5 STUDENT:-  1,  3, 5 **
+
+```{R}
+get.constraints(Stu_Grp)
+```
+
+
+```{r}
+library(ggplot2)
+
+# Assuming Val_Data already contains the Points, GPA, Presentation, and Team columns
+Val_Data <- data.frame(
+  Group = rep(1:5, each = 3),
+  Points = c(10, 15, 20, 18, 22, 25, 12, 16, 19, 24, 28, 30, 14, 17, 21),
+  GPA = c(3.5, 3.2, 3.8, 3.0, 3.6, 3.9, 3.2, 3.4, 3.7, 3.9, 4.0, 4.2, 3.5, 3.6, 4.0),
+  Presentation = c(8, 9, 7, 9, 8, 7, 6, 8, 9, 7, 9, 8, 7, 6, 8),
+  Team = c(7, 8, 6, 8, 7, 6, 5, 7, 8, 6, 8, 7, 6, 5, 7)
+)
+
+# Melt the data frame to long format
+Val_Data_long <- reshape2::melt(Val_Data, id.vars = c("Group", "Points"))
+
+# Plotting using ggplot
+ggplot(Val_Data_long, aes(x = factor(Group), y = value, fill = variable)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Total Score of Each Group",
+       x = "Group",
+       y = "Total Points") +
+  scale_fill_brewer(palette = "Set3") +
+  theme_minimal()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
